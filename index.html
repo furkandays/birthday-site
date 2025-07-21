@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doğum Günün Kutlu Olsun!</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <style>
+    /* Hide native cursor */
+    html, body, * { cursor: none !important; }
+    /* Custom cursor */
+    #custom-cursor {
+      position: fixed; width: 32px; height: 32px;
+      background: url('src/heart-ribbon.png') center/contain no-repeat;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%, -50%);
+    }
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #ffe6f0; color: #333; overflow-x: hidden; }
+    section { padding: 60px 20px; text-align: center; position: relative; }
+
+    /* Score */
+    #score {
+      position: absolute; top: 20px; right: 20px;
+      font-family: 'Pacifico', cursive; font-size: 2em; color: #cc0066;
+      text-shadow: 2px 2px 4px rgba(255,255,255,0.8); z-index: 1000;
+    }
+
+    /* Falling items */
+    .game-item {
+      position: absolute; width: 100px; cursor: pointer;
+      top: -60px; animation: fall linear forwards;
+    }
+    @keyframes fall { to { transform: translateY(110vh); } }
+
+    /* Opening section */
+    #intro {
+      height: 100vh; display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      background: radial-gradient(circle at center, #ffe6f0 0%, #ffd1e0 100%);
+      overflow: hidden;
+    }
+    #starCanvas, .intro-confetti {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+    }
+    #intro h1 {
+      font-family: 'Pacifico', cursive; font-size: 3em;
+      background: linear-gradient(270deg, #ff9ec4, #ffe6f0, #fe7fa2);
+      background-size: 600%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      opacity: 0; animation: shimmer 6s infinite, fadeIn 2s forwards;
+    }
+    #subtitle { opacity: 0; font-family: 'Pacifico', cursive; font-size: 1.5em; color: #cc0066;
+      margin-top: 10px; animation: fadeIn 2s 1s forwards;
+    }
+    .pulse-heart { opacity: 0; font-size: 4em; margin: 20px 0; color: #ff69b4;
+      animation: fadeIn 2s 2s forwards, pulse 1s infinite;
+    }
+    @keyframes shimmer { 0%{background-position:0%}50%{background-position:100%}100%{background-position:0%}}  
+    @keyframes fadeIn { to{opacity:1} } @keyframes pulse {0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+    #cake1,#cake2 { position: absolute; top: 35%; width: 240px; }
+    #cake1 { left: 10%; transform: translateY(-50%);} #cake2 { right: 10%; transform: translateY(-50%);}  
+
+    /* Gallery */
+    
+    #gallery { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:15px; max-width:1000px; margin:auto; }
+    .gallery-item { position: relative; overflow:hidden; border-radius:8px; }
+    .gallery-item img { width:100%; transition:transform .3s; cursor:pointer; }
+    .gallery-item:hover img { transform:scale(1.1); }
+    .caption { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.6);
+      color:#fff; padding:10px; font-family:'Pacifico',cursive; opacity:0; transition:opacity .3s;
+    } { position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.6);
+      color:#fff; padding:10px; font-family:'Pacifico',cursive; opacity:0; transition:opacity .3s;
+    }
+    .gallery-item:hover .caption { opacity:1; }
+
+    /* Surprise */
+    #surprise { padding:80px 20px; }
+    .surprise-row { display:flex; justify-content:center; align-items:center; gap:30px; }
+    .surprise-img { width:392px; }
+    #surpriseBtn { padding:25px 50px; font-size:2em; font-family:'Pacifico',cursive;
+      background:linear-gradient(135deg,#ff9ec4,#fe7fa2); border:none; border-radius:12px;
+      color:#fff; box-shadow:0 8px 25px rgba(0,0,0,0.3); transition:transform .2s;
+    }
+    #surpriseBtn:hover { transform:scale(1.15); }
+    #balloons { position:absolute; bottom:-100px; left:50%; transform:translateX(-50%); }
+    .balloon { position:absolute; width:50px; border-radius:50%; animation:rise 6s ease-in infinite; }
+    @keyframes rise { to{transform:translateY(-500px);opacity:0} }
+    #surpriseMsg { margin:20px auto 0; font-size:1.5em; font-family:'Pacifico',cursive; color:#cc0066; opacity:0; }
+
+    /* Bottom confetti */
+    #confettiTrigger { height:100vh; display:flex; flex-direction:column;
+      justify-content:center; align-items:center; background:#fff;
+    }
+    #confettiTrigger h2 { font-family:'Pacifico',cursive; font-size:3.5em; color:#cc0066; }
+    #confettiTrigger p { font-family:'Poppins',sans-serif; font-size:1.3em; max-width:600px; }
+  </style>
+</head>
+<body>
+  <!-- Background audio -->
+  <audio id="bgAudio" src="src/bg-music.mp3" preload="auto" loop autoplay></audio>
+  <!-- Victory audio -->
+  <audio id="winAudio" src="src/fun-music.mp3" preload="auto"></audio>
+  <div id="custom-cursor"></div>
+
+  <!-- Opening -->
+  <section id="intro">
+    <canvas id="starCanvas"></canvas>
+    <div class="intro-confetti"></div>
+    <div id="score">Score: 0</div>
+    <img id="cake1" src="src/pasta1.png" alt="cake1">
+    <img id="cake2" src="src/pasta2.png" alt="cake2">
+    <h1>Doğum Günün Kutlu Olsun Sudem</h1>
+    <p id="subtitle">Her günün doğum gününmüş gibi hep çok mutlu ol!</p>
+    <div class="pulse-heart">❤️</div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="gallery">
+    <div class="gallery-item">
+      <a href="src/foto1.jpg" target="_blank"><img src="src/foto1.jpg" alt="Foto 1"></a>
+      
+    </div>
+    <div class="gallery-item">
+      <a href="src/foto2.jpg" target="_blank"><img src="src/foto2.jpg" alt="Foto 2"></a>
+      
+    </div>
+    <div class="gallery-item">
+      <a href="src/foto3.jpg" target="_blank"><img src="src/foto3.jpg" alt="Foto 3"></a>
+      
+    </div>
+    <div class="gallery-item">
+      <a href="src/foto4.jpg" target="_blank"><img src="src/foto4.jpg" alt="Foto 4"></a>
+      
+    </div>
+    <div class="gallery-item">
+      <a href="src/foto5.jpg" target="_blank"><img src="src/foto5.jpg" alt="Foto 5"></a>
+      
+    </div>
+  </section>
+
+  <!-- Surprise -->
+  <section id="surprise">
+    <div class="surprise-row">
+      <img class="surprise-img" src="src/photo_left.jpg" alt="left">
+      <button id="surpriseBtn" class="animate__animated animate__pulse animate__infinite">Sürprizi Gör!</button>
+      <img class="surprise-img" src="src/photo_right.jpg" alt="right">
+    </div>
+    <div id="balloons"></div>
+    <div id="surpriseMsg">Seni Çok Seviyorum Prensesimm</div>
+  </section>
+
+  <!-- Bottom Confetti -->
+  <section id="confettiTrigger">
+    <h2>Nice benli yıllara :3</h2>
+    <p>15 günlüğüne aynı yaştayız muhehehe</p>
+  </section>
+
+  <script>
+    // Attempt play on first user interaction for better compatibility
+    document.addEventListener('pointerdown', () => {
+      const bgAudio = document.getElementById('bgAudio');
+      if (bgAudio && bgAudio.paused) bgAudio.play().catch(() => {});
+    }, { once: true });
+    // Custom cursor
+    const customCursor = document.getElementById('custom-cursor');
+    document.addEventListener('mousemove', e => {
+      customCursor.style.left = e.clientX + 'px';
+      customCursor.style.top  = e.clientY + 'px';
+    });
+
+    // Stars
+    function initStars() {
+      const canvas = document.getElementById('starCanvas');
+      const ctx = canvas.getContext('2d');
+      const intro = document.getElementById('intro');
+      function resize(){ canvas.width=intro.offsetWidth; canvas.height=intro.offsetHeight; }
+      window.addEventListener('resize', resize); resize();
+      const stars = Array.from({length:30},()=>({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*8+4, alpha:Math.random(), dx:(Math.random()-0.5)*0.3, dy:(Math.random()-0.5)*0.3 }));
+      function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); stars.forEach(s=>{ ctx.save(); ctx.globalAlpha=s.alpha; ctx.shadowBlur=16; ctx.shadowColor='#fff'; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,2*Math.PI); ctx.fill(); ctx.restore(); s.x+=s.dx; s.y+=s.dy; if(s.x<0) s.x=canvas.width; if(s.x>canvas.width) s.x=0; if(s.y<0) s.y=canvas.height; if(s.y>canvas.height) s.y=0; }); requestAnimationFrame(draw); }
+      draw();
+    }
+    window.addEventListener('load', () => {
+      // Start background music
+      const bgAudio = document.getElementById('bgAudio');
+      if (bgAudio) bgAudio.play();
+      // Sound effects for clicks
+      function playBeep() {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 600;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 0.01);
+        osc.start(ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+        osc.stop(ctx.currentTime + 0.3);
+      }
+      function playBoom() {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = ctx.sampleRate * 0.2;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = ctx.createGain();
+        noise.connect(gain);
+        gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        noise.start(ctx.currentTime);
+        noise.stop(ctx.currentTime + 0.2);
+      }
+      initStars();
+      confetti({particleCount:100, spread:80, origin:{y:0.2}, shapes:['circle','square']});
+
+      // Spawn falling game items
+      const intro = document.getElementById('intro'); let score=0, celebrated=false;
+      const scoreEl = document.getElementById('score');
+      const types = [
+        {src:'src/rabbit-white.png', val:1, duration:5},
+        {src:'src/rabbit-pink.png', val:1, duration:5},
+        {src:'src/rabbit-brown.png', val:1, duration:5},
+        {src:'src/rabbit-diamond.png', val:5, duration:3},
+        {src:'src/bomb.png', val:-5, duration:5}
+      ];
+      function spawnItem() {
+        const t = types[Math.floor(Math.random() * types.length)];
+        const img = document.createElement('img');
+        img.src = t.src;
+        img.className = 'game-item';
+        img.dataset.val = t.val;
+        img.style.left = Math.random() * 80 + 10 + '%';
+        img.style.animationDuration = t.duration + 's';
+        intro.appendChild(img);
+        // Remove after animation
+        setTimeout(() => img.remove(), t.duration * 1000);
+      }
+      // Global click handler for falling items
+      document.addEventListener('click', e => {
+        const el = e.target.closest('.game-item');
+        if (!el) return;
+        const val = parseInt(el.dataset.val, 10);
+        // Visual click effect
+        if (val === 5) {
+          // 3 diamonds and 2 sparkles
+          const emojis = ['','💎','','✨',''];
+          emojis.forEach((emoji, i) => {
+            const fx = document.createElement('div');
+            fx.textContent = emoji;
+            Object.assign(fx.style, {
+              position: 'fixed',
+              left: e.clientX + (i - 2) * 20 + 'px',
+              top: e.clientY + 'px',
+              fontSize: '3em',
+              pointerEvents: 'none',
+              opacity: 1,
+              transform: 'translate(-50%, -50%)'
+            });
+            document.body.appendChild(fx);
+            fx.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 800, easing: 'ease-out' });
+            setTimeout(() => fx.remove(), 800);
+          });
+          // Only beep for diamond
+          playBeep();
+        } else {
+          const fx = document.createElement('div');
+          fx.textContent = val > 0 ? '✨' : '💥';
+          Object.assign(fx.style, {
+            position: 'fixed',
+            left: e.clientX + 'px',
+            top: e.clientY + 'px',
+            fontSize: '2.5em',
+            pointerEvents: 'none',
+            opacity: 1,
+            transform: 'translate(-50%, -50%)'
+          });
+          document.body.appendChild(fx);
+          fx.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 800, easing: 'ease-out' });
+          setTimeout(() => fx.remove(), 800);
+          // Sound effect
+          if (val > 0) playBeep(); else playBoom();
+        }
+        // Update score
+        score += val;
+        scoreEl.textContent = 'Score: ' + score;
+        el.remove();
+        if (score >= 50 && !celebrated) {
+          // Stop background music
+          const bgAudio = document.getElementById('bgAudio');
+          if (bgAudio) { bgAudio.pause(); bgAudio.currentTime = 0; }
+          
+          // Play victory music
+          const winAudio = document.getElementById('winAudio'); if(winAudio){ winAudio.play(); }
+          celebrated = true;
+          // 5 konfeti patlaması
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => confetti({ particleCount: 300, spread: 200 }), i * 500);
+  }
+
+  // Kalbin altına özel fotoğrafı ekle
+  const celebrationPhoto = document.createElement('img');
+  celebrationPhoto.src = 'src/special-photo.png';
+  celebrationPhoto.alt = 'Kutlama Fotoğrafı';
+  celebrationPhoto.style.width = '300px';
+  celebrationPhoto.style.marginTop = '20px';
+  const heartEl = document.querySelector('#intro .pulse-heart');
+  if (heartEl) {
+    heartEl.after(celebrationPhoto);
+  }
+        }});
+      // Start spawning game items
+      setInterval(spawnItem, 800);
+
+      // Random heart emojis fade
+      setInterval(()=>{
+        const e=document.createElement('div');
+        const hearts=['❤️','🧡','💛','💚','💙','💜','🎀','🤍','💖'];
+        e.textContent=hearts[Math.floor(Math.random()*hearts.length)];
+        Object.assign(e.style,{ position:'fixed', top:Math.random()*80+10+'%', left:Math.random()*90+'%', fontSize:'1.5em', pointerEvents:'none', opacity:1 });
+        document.body.appendChild(e);
+        e.animate([{opacity:1},{opacity:0}],{duration:2000,easing:'ease-in'});
+        setTimeout(()=>e.remove(),2000);
+      },200);
+    });
+
+    // Surprise button
+    document.getElementById('surpriseBtn').addEventListener('click',()=>{
+      const sec=document.getElementById('surprise'); sec.querySelector('.surprise-row').remove();
+      const img=document.createElement('img'); img.src='src/surprise.png'; img.alt='Surprise'; img.style.width='375px'; img.style.margin='0 auto';
+      sec.insertBefore(img, sec.querySelector('#balloons'));
+      const colors=['#ff6b6b','#feca57','#48dbfb','#1dd1a1','#ff9ff3'];
+      for(let i=0;i<20;i++){const b=document.createElement('div'); b.className='balloon'; b.style.left=`${5+i*5}%`; b.style.background=colors[i%colors.length]; document.getElementById('balloons').appendChild(b);}      
+      document.getElementById('surpriseMsg').style.opacity=1; confetti({particleCount:200,spread:100});
+      setInterval(()=>{const e=document.createElement('div'); e.textContent=['❤️','🎀','💖','🎉','🎈'][Math.floor(Math.random()*5)]; Object.assign(e.style,{position:'fixed',fontSize:'1.5em',left:`${Math.random()*100}%`,top:'-50px'}); document.body.appendChild(e); e.animate([{top:'100vh'}],{duration:3000,easing:'linear'}); setTimeout(()=>e.remove(),3000);},200);
+    });
+
+    // Scroll confetti
+    window.addEventListener('scroll',()=>{ if(window.innerHeight+window.scrollY>=document.body.offsetHeight) confetti({particleCount:150,spread:60}); });
+  </script>
+</body>
+</html>
