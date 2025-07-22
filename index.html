@@ -295,9 +295,11 @@
         score += val;
         scoreEl.textContent = 'Score: ' + score;
         el.remove();
+        
+        //Get Rickrolled
         if (score >= 100 && !rickrolled) {
-          rickrolled = true;
           window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
+          rickrolled = true;
         }
           
         if (score >= 22 && !celebrated) {
