@@ -225,7 +225,7 @@
       confetti({particleCount:100, spread:80, origin:{y:0.2}, shapes:['circle','square']});
 
       // Spawn falling game items
-      const intro = document.getElementById('intro'); let score=0, celebrated=false;
+      const intro = document.getElementById('intro'); let score=0, celebrated=false, rickrolled=false;
       const scoreEl = document.getElementById('score');
       const types = [
         {src:'src/rabbit-white.png', val:1, duration:4},
@@ -295,6 +295,11 @@
         score += val;
         scoreEl.textContent = 'Score: ' + score;
         el.remove();
+        if (score >= 100 && !rickrolled) {
+          rickrolled = true;
+          window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
+        }
+          
         if (score >= 22 && !celebrated) {
           // Stop background music
           const bgAudio = document.getElementById('bgAudio');
